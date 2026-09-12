@@ -7,13 +7,37 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="loginPage" class="login-page">
+    <div class="login-card">
+      <div class="login-logo">📦</div>
+      <h1>Inventory Stok Site</h1>
+      <p>Monitoring Stok Barang</p>
+      <form id="loginForm">
+        <label>Username</label>
+        <input id="loginUsername" type="text" placeholder="Masukkan username" required>
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="Masukkan password" required>
+        <button class="primary login-btn" type="submit">Masuk</button>
+        <div id="loginError" class="login-error"></div>
+      </form>
+      <div class="demo-account">
+        <b>Akun demo:</b><br>
+        Admin: <code>admin</code> / <code>admin123</code><br>
+        Kasir: <code>kasir</code> / <code>kasir123</code>
+      </div>
+    </div>
+  </div>
+
+  <div id="appPage" class="app-page hidden">
   <aside class="sidebar">
     <h2>📦 Inventory</h2>
     <p class="subtitle">Stok Barang Site</p>
+    <div class="user-box">👤 <span id="loggedUser">Admin</span></div>
     <button class="nav active" data-page="dashboard">Dashboard</button>
     <button class="nav" data-page="barang">Data Barang</button>
     <button class="nav" data-page="transaksi">Transaksi</button>
     <button class="nav" data-page="pesan">Perlu Dipesan</button>
+    <button class="nav logout-btn" id="logoutBtn">↪ Keluar</button>
   </aside>
 
   <main class="content">
@@ -74,6 +98,7 @@
       </div>
     </section>
   </main>
+  </div>
 
   <div id="modal" class="modal hidden">
     <div class="modal-box">

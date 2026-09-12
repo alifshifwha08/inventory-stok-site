@@ -1,3 +1,43 @@
+
+// Login demo (untuk prototype GitHub Pages)
+const DEMO_USERS = [
+  {username:"admin", password:"admin123", role:"Admin"},
+  {username:"kasir", password:"kasir123", role:"Kasir"}
+];
+
+function showApp(){
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("appPage").classList.remove("hidden");
+  const user = JSON.parse(localStorage.getItem("loggedUser") || '{"role":"Admin"}');
+  document.getElementById("loggedUser").textContent = user.role;
+}
+function showLogin(){
+  document.getElementById("appPage").classList.add("hidden");
+  document.getElementById("loginPage").classList.remove("hidden");
+  document.getElementById("loginUsername").focus();
+}
+document.getElementById("loginForm").onsubmit = (e)=>{
+  e.preventDefault();
+  const u=document.getElementById("loginUsername").value.trim();
+  const p=document.getElementById("loginPassword").value;
+  const found=DEMO_USERS.find(x=>x.username===u && x.password===p);
+  if(!found){
+    document.getElementById("loginError").textContent="Username atau password salah.";
+    return;
+  }
+  localStorage.setItem("loggedUser", JSON.stringify({username:found.username, role:found.role}));
+  document.getElementById("loginError").textContent="";
+  showApp();
+};
+document.getElementById("logoutBtn").onclick=()=>{
+  localStorage.removeItem("loggedUser");
+  document.getElementById("loginForm").reset();
+  showLogin();
+};
+
+if(localStorage.getItem("loggedUser")) showApp();
+else showLogin();
+
 let barang = JSON.parse(localStorage.getItem("barang")) || [
   {id:1,kode:"BRG001",nama:"RJ45",stok:8,satuan:"pcs",minimum:10},
   {id:2,kode:"BRG002",nama:"Kabel LAN",stok:25,satuan:"pcs",minimum:10},
@@ -30,7 +70,7 @@ function renderDashboard(){
 function renderBarang(){
   const q=(search.value||"").toLowerCase();
   const rows=barang.filter(b=>(b.nama+b.kode).toLowerCase().includes(q));
-  barangTable.innerHTML=rows.length?rows.map(b=>{let s=status(b);return `<tr><td>${b.kode}</td><td>${b.nama}</td><td><b>${b.stok}</b></td><td>${b.satuan}</td><td>${b.minimum}</td><td><span class="badge ${s[1]}">${s[0]}</span></td><td><button onclick="hapus(${b.id})">Hapus</button></td></tr>`}).join(""):'<tr><td colspan="7" class="empty">Belum ada barang.</td></tr>';
+  barangTable.innerHTML=rows.length?rows.map(b=>{let s=status(b);return `<tr><td>${b.kode}</td><td>${b.nama}</td><td><b>${b.stok}</b></td><td>${b.satuan}</td><td>${b.minimum}</td><td><span class="badge ${s[1]}">${s[0]}</span></td><td><button onclick="editBarang(${b.id})">Edit</button> <button onclick="hapus(${b.id})">Hapus</button></td></tr>`}).join(""):'<tr><td colspan="7" class="empty">Belum ada barang.</td></tr>';
 }
 function renderTransaksi(){
   transaksiTable.innerHTML=transaksi.length?[...transaksi].reverse().map(t=>`<tr><td>${t.tanggal}</td><td>${t.nama}</td><td>${t.jenis}</td><td>${t.jumlah}</td><td>${t.keterangan||"-"}</td></tr>`).join(""):'<tr><td colspan="5" class="empty">Belum ada transaksi.</td></tr>';
@@ -40,9 +80,26 @@ function renderPesan(){
   pesanList.innerHTML=list.length?list.map(b=>`<div class="item-alert"><b>${b.nama}</b> — stok ${b.stok} ${b.satuan}; minimum ${b.minimum}. <b>Sudah waktunya pesan.</b></div>`).join(""):'<div class="empty">Belum ada barang yang perlu dipesan.</div>';
 }
 function fillSelect(){barangId.innerHTML=barang.map(b=>`<option value="${b.id}">${b.kode} - ${b.nama} (stok ${b.stok})</option>`).join("")}
-function openModal(){modal.classList.remove("hidden");barangForm.reset()}
-function closeModal(){modal.classList.add("hidden")}
-barangForm.onsubmit=e=>{e.preventDefault();barang.push({id:Date.now(),kode:kode.value.trim(),nama:nama.value.trim(),stok:+stok.value,satuan:satuan.value.trim(),minimum:+minimum.value});save();closeModal();refresh();}
+let editId=null;
+function openModal(){editId=null;modalTitle.textContent="Tambah Barang";barangForm.reset();modal.classList.remove("hidden")}
+function editBarang(id){
+  const b=barang.find(x=>x.id===id); if(!b)return;
+  editId=id;
+  modalTitle.textContent="Edit Data Barang";
+  kode.value=b.kode; nama.value=b.nama; stok.value=b.stok; satuan.value=b.satuan; minimum.value=b.minimum;
+  modal.classList.remove("hidden");
+}
+function closeModal(){modal.classList.add("hidden");editId=null}
+barangForm.onsubmit=e=>{
+ e.preventDefault();
+ const data={kode:kode.value.trim(),nama:nama.value.trim(),stok:+stok.value,satuan:satuan.value.trim(),minimum:+minimum.value};
+ if(editId!==null){
+   const i=barang.findIndex(b=>b.id===editId); if(i!==-1) barang[i]={...barang[i],...data};
+ } else {
+   barang.push({id:Date.now(),...data});
+ }
+ save();closeModal();refresh();
+}
 function hapus(id){if(confirm("Hapus barang ini?")){barang=barang.filter(b=>b.id!==id);save();refresh()}}
 function openTransaksi(){transaksiModal.classList.remove("hidden");fillSelect()}
 function closeTransaksi(){transaksiModal.classList.add("hidden")}
