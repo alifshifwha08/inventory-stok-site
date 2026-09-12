@@ -1,113 +1,71 @@
-
-// Login demo (untuk prototype GitHub Pages)
-const DEMO_USERS = [
-  {username:"admin", password:"admin123", role:"Admin"},
-  {username:"kasir", password:"kasir123", role:"Kasir"}
+const USERS=[{u:"admin",p:"admin123",role:"Admin"},{u:"kasir",p:"kasir123",role:"Kasir"}];
+const initialItems=[
+ {code:"BRG001",name:"Kabel LAN",stock:12,unit:"pcs",min:20},
+ {code:"BRG002",name:"RJ45",stock:8,unit:"pcs",min:10},
+ {code:"BRG003",name:"Mouse",stock:15,unit:"pcs",min:5},
+ {code:"BRG004",name:"Tinta Printer",stock:1,unit:"pcs",min:5},
+ {code:"BRG005",name:"Baterai AA",stock:0,unit:"pcs",min:5},
+ {code:"BRG006",name:"Kabel HDMI",stock:30,unit:"pcs",min:10}
 ];
-
-function showApp(){
-  document.getElementById("loginPage").classList.add("hidden");
-  document.getElementById("appPage").classList.remove("hidden");
-  const user = JSON.parse(localStorage.getItem("loggedUser") || '{"role":"Admin"}');
-  document.getElementById("loggedUser").textContent = user.role;
+let items=JSON.parse(localStorage.getItem("scm_items")||"null")||initialItems;
+let transactions=JSON.parse(localStorage.getItem("scm_tx")||"[]");
+const $=id=>document.getElementById(id);
+const save=()=>{localStorage.setItem("scm_items",JSON.stringify(items));localStorage.setItem("scm_tx",JSON.stringify(transactions));};
+const status=i=>i.stock===0?"empty":i.stock<=i.min?"order":"safe";
+const label=s=>s==="safe"?"Aman":s==="order"?"Perlu dipesan":"Stok habis";
+function render(){
+ $("totalItems").textContent=items.length;
+ $("safeItems").textContent=items.filter(i=>status(i)==="safe").length;
+ $("orderItems").textContent=items.filter(i=>status(i)==="order").length;
+ $("emptyItems").textContent=items.filter(i=>status(i)==="empty").length;
+ renderTable(); renderAlerts(); renderOrders(); renderReports(); fillSelects(); renderRecent();
 }
-function showLogin(){
-  document.getElementById("appPage").classList.add("hidden");
-  document.getElementById("loginPage").classList.remove("hidden");
-  document.getElementById("loginUsername").focus();
+function renderTable(){
+ const q=($("searchItem")?.value||"").toLowerCase(), f=$("filterStatus")?.value||"all";
+ $("itemTable").innerHTML=items.map((i,idx)=>{let s=status(i);if(f!=="all"&&f!==s)return "";if(q&&!(`${i.code} ${i.name}`.toLowerCase().includes(q)))return "";
+ return `<tr><td>${i.code}</td><td><strong>${i.name}</strong></td><td>${i.stock}</td><td>${i.unit}</td><td>${i.min}</td><td><span class="badge ${s}">${label(s)}</span></td><td><div class="actions"><button class="mini edit" onclick="editItem(${idx})">Edit</button><button class="mini delete" onclick="deleteItem(${idx})">Hapus</button></div></td></tr>`}).join("")||`<tr><td colspan="7">Tidak ada data.</td></tr>`;
 }
-document.getElementById("loginForm").onsubmit = (e)=>{
-  e.preventDefault();
-  const u=document.getElementById("loginUsername").value.trim();
-  const p=document.getElementById("loginPassword").value;
-  const found=DEMO_USERS.find(x=>x.username===u && x.password===p);
-  if(!found){
-    document.getElementById("loginError").textContent="Username atau password salah.";
-    return;
-  }
-  localStorage.setItem("loggedUser", JSON.stringify({username:found.username, role:found.role}));
-  document.getElementById("loginError").textContent="";
-  showApp();
-};
-document.getElementById("logoutBtn").onclick=()=>{
-  localStorage.removeItem("loggedUser");
-  document.getElementById("loginForm").reset();
-  showLogin();
-};
-
-if(localStorage.getItem("loggedUser")) showApp();
-else showLogin();
-
-let barang = JSON.parse(localStorage.getItem("barang")) || [
-  {id:1,kode:"BRG001",nama:"RJ45",stok:8,satuan:"pcs",minimum:10},
-  {id:2,kode:"BRG002",nama:"Kabel LAN",stok:25,satuan:"pcs",minimum:10},
-  {id:3,kode:"BRG003",nama:"Mouse",stok:3,satuan:"unit",minimum:5}
-];
-let transaksi = JSON.parse(localStorage.getItem("transaksi")) || [];
-
-const save=()=>{localStorage.setItem("barang",JSON.stringify(barang));localStorage.setItem("transaksi",JSON.stringify(transaksi));};
-
-document.querySelectorAll(".nav").forEach(btn=>btn.onclick=()=>{
-  document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
-  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
-  document.getElementById(btn.dataset.page).classList.remove("hidden");
-  document.getElementById("pageTitle").textContent=btn.textContent.trim();
-  refresh();
-});
-
-function status(b){
-  if(b.stok===0)return ['Habis','danger-b'];
-  if(b.stok<=b.minimum)return ['Perlu dipesan','warning-b'];
-  return ['Aman','safe'];
+function renderAlerts(){
+ const arr=items.filter(i=>status(i)!=="safe").sort((a,b)=>a.stock-b.stock);
+ $("dashboardAlerts").innerHTML=arr.slice(0,5).map(i=>`<div class="alert-row"><span class="dot ${i.stock===0?"red":""}"></span><div class="row-main"><b>${i.name}</b><small>Stok ${i.stock} ${i.unit} • Minimum ${i.min}</small></div><span class="badge ${status(i)}">${label(status(i))}</span></div>`).join("")||"<p>Semua stok aman 🎉</p>";
 }
-function refresh(){renderDashboard();renderBarang();renderTransaksi();renderPesan();fillSelect();}
-function renderDashboard(){
-  const perlu=barang.filter(b=>b.stok<=b.minimum), habis=barang.filter(b=>b.stok===0);
-  totalBarang.textContent=barang.length; stokAman.textContent=barang.filter(b=>b.stok>b.minimum).length;
-  perluPesan.textContent=perlu.length; stokHabis.textContent=habis.length;
-  alertList.innerHTML=perlu.length?perlu.map(b=>`<div class="item-alert"><b>${b.nama}</b> (${b.kode}) — tersisa <b>${b.stok} ${b.satuan}</b>. Batas pesan: ${b.minimum} ${b.satuan}.</div>`).join(""):'<div class="empty">Semua stok masih aman.</div>';
+function renderOrders(){
+ const arr=items.filter(i=>status(i)!=="safe");
+ $("orderList").innerHTML=arr.map(i=>`<div class="order-card ${i.stock===0?"empty":""}"><h4>${i.name}</h4><div class="numbers">Stok sekarang <b>${i.stock}</b> ${i.unit}<br>Minimum ${i.min} ${i.unit}</div><span class="badge ${status(i)}">${i.stock===0?"Segera isi stok":"Sudah waktunya pesan"}</span></div>`).join("")||`<div class="card"><h3>Tidak ada barang yang perlu dipesan.</h3></div>`;
 }
-function renderBarang(){
-  const q=(search.value||"").toLowerCase();
-  const rows=barang.filter(b=>(b.nama+b.kode).toLowerCase().includes(q));
-  barangTable.innerHTML=rows.length?rows.map(b=>{let s=status(b);return `<tr><td>${b.kode}</td><td>${b.nama}</td><td><b>${b.stok}</b></td><td>${b.satuan}</td><td>${b.minimum}</td><td><span class="badge ${s[1]}">${s[0]}</span></td><td><button onclick="editBarang(${b.id})">Edit</button> <button onclick="hapus(${b.id})">Hapus</button></td></tr>`}).join(""):'<tr><td colspan="7" class="empty">Belum ada barang.</td></tr>';
+function renderRecent(){
+ const arr=transactions.slice(-5).reverse();
+ $("recentTransactions").innerHTML=arr.map(t=>`<div class="activity-row"><span class="dot ${t.type==="Keluar"?"red":""}"></span><div class="row-main"><b>${t.type} • ${t.name}</b><small>${t.date} • ${t.qty} ${t.unit}</small></div></div>`).join("")||"<p>Belum ada transaksi.</p>";
 }
-function renderTransaksi(){
-  transaksiTable.innerHTML=transaksi.length?[...transaksi].reverse().map(t=>`<tr><td>${t.tanggal}</td><td>${t.nama}</td><td>${t.jenis}</td><td>${t.jumlah}</td><td>${t.keterangan||"-"}</td></tr>`).join(""):'<tr><td colspan="5" class="empty">Belum ada transaksi.</td></tr>';
+function renderReports(){
+ $("reportSummary").innerHTML=`<div><strong>${items.length}</strong><span>Jenis barang</span></div><div><strong>${items.reduce((a,b)=>a+b.stock,0)}</strong><span>Total unit</span></div><div><strong>${items.filter(i=>status(i)!=="safe").length}</strong><span>Perlu tindakan</span></div>`;
+ $("reportTable").innerHTML=items.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.stock} ${i.unit}</td><td>${i.min} ${i.unit}</td><td><span class="badge ${status(i)}">${label(status(i))}</span></td></tr>`).join("");
 }
-function renderPesan(){
-  const list=barang.filter(b=>b.stok<=b.minimum);
-  pesanList.innerHTML=list.length?list.map(b=>`<div class="item-alert"><b>${b.nama}</b> — stok ${b.stok} ${b.satuan}; minimum ${b.minimum}. <b>Sudah waktunya pesan.</b></div>`).join(""):'<div class="empty">Belum ada barang yang perlu dipesan.</div>';
+function fillSelects(){
+ ["inItem","outItem"].forEach(id=>{$(id).innerHTML=items.map((i,idx)=>`<option value="${idx}">${i.code} — ${i.name} (stok ${i.stock})</option>`).join("")});
 }
-function fillSelect(){barangId.innerHTML=barang.map(b=>`<option value="${b.id}">${b.kode} - ${b.nama} (stok ${b.stok})</option>`).join("")}
-let editId=null;
-function openModal(){editId=null;modalTitle.textContent="Tambah Barang";barangForm.reset();modal.classList.remove("hidden")}
-function editBarang(id){
-  const b=barang.find(x=>x.id===id); if(!b)return;
-  editId=id;
-  modalTitle.textContent="Edit Data Barang";
-  kode.value=b.kode; nama.value=b.nama; stok.value=b.stok; satuan.value=b.satuan; minimum.value=b.minimum;
-  modal.classList.remove("hidden");
+function showPage(name){
+ document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+ $("page-"+name).classList.remove("hidden");
+ document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===name));
+ $("pageTitle").textContent={dashboard:"Dashboard",barang:"Data Barang",masuk:"Barang Masuk",keluar:"Barang Keluar",pesan:"Perlu Dipesan",laporan:"Laporan"}[name];
+ render();
 }
-function closeModal(){modal.classList.add("hidden");editId=null}
-barangForm.onsubmit=e=>{
- e.preventDefault();
- const data={kode:kode.value.trim(),nama:nama.value.trim(),stok:+stok.value,satuan:satuan.value.trim(),minimum:+minimum.value};
- if(editId!==null){
-   const i=barang.findIndex(b=>b.id===editId); if(i!==-1) barang[i]={...barang[i],...data};
- } else {
-   barang.push({id:Date.now(),...data});
- }
- save();closeModal();refresh();
-}
-function hapus(id){if(confirm("Hapus barang ini?")){barang=barang.filter(b=>b.id!==id);save();refresh()}}
-function openTransaksi(){transaksiModal.classList.remove("hidden");fillSelect()}
-function closeTransaksi(){transaksiModal.classList.add("hidden")}
-transaksiForm.onsubmit=e=>{
- e.preventDefault();let b=barang.find(x=>x.id==barangId.value), j=+jumlah.value;
- if(jenis.value==="keluar"&&j>b.stok){alert("Stok tidak cukup.");return}
- b.stok += jenis.value==="masuk"?j:-j;
- transaksi.push({tanggal:new Date().toLocaleString("id-ID"),nama:b.nama,jenis:jenis.value,jumlah:j,keterangan:keterangan.value});
- save();closeTransaksi();refresh();
-};
-refresh();
+window.showPage=showPage;
+$("loginForm").onsubmit=e=>{e.preventDefault();let u=$("loginUsername").value,p=$("loginPassword").value,x=USERS.find(a=>a.u===u&&a.p===p);if(!x){$("loginError").textContent="Username atau password salah.";return}localStorage.setItem("scm_user",JSON.stringify(x));$("loggedUser").textContent=x.role;document.querySelector(".top-user").textContent=x.role;$("loginPage").classList.add("hidden");$("appPage").classList.remove("hidden");render();};
+$("logoutBtn").onclick=()=>{localStorage.removeItem("scm_user");location.reload()};
+if(localStorage.getItem("scm_user")){$("loginPage").classList.add("hidden");$("appPage").classList.remove("hidden");let x=JSON.parse(localStorage.getItem("scm_user"));$("loggedUser").textContent=x.role;document.querySelector(".top-user").textContent=x.role;}
+document.querySelectorAll(".nav").forEach(n=>n.onclick=()=>showPage(n.dataset.page));
+$("addItemBtn").onclick=()=>openModal();
+$("closeModal").onclick=()=>$("modal").classList.add("hidden");
+function openModal(idx=null){$("modal").classList.remove("hidden");$("modalTitle").textContent=idx===null?"Tambah Barang":"Edit Barang";$("editIndex").value=idx??"";let i=idx===null?{code:"",name:"",stock:0,unit:"pcs",min:0}:items[idx];$("itemCode").value=i.code;$("itemName").value=i.name;$("itemStock").value=i.stock;$("itemUnit").value=i.unit;$("itemMin").value=i.min}
+window.editItem=idx=>openModal(idx);
+window.deleteItem=idx=>{if(confirm("Hapus barang ini?")){items.splice(idx,1);save();render()}};
+$("itemForm").onsubmit=e=>{e.preventDefault();let idx=$("editIndex").value, obj={code:$("itemCode").value.trim(),name:$("itemName").value.trim(),stock:+$("itemStock").value,unit:$("itemUnit").value.trim(),min:+$("itemMin").value};if(idx==="")items.push(obj);else items[+idx]=obj;save();$("modal").classList.add("hidden");render()};
+$("inForm").onsubmit=e=>{e.preventDefault();let idx=+$("inItem").value,q=+$("inQty").value,i=items[idx],d=$("inDate").value;i.stock+=q;transactions.push({date:d,name:i.name,type:"Masuk",qty:q,unit:i.unit,note:$("inNote").value});save();e.target.reset();setDateDefaults();render();alert("Barang masuk berhasil disimpan.")};
+$("outForm").onsubmit=e=>{e.preventDefault();let idx=+$("outItem").value,q=+$("outQty").value,i=items[idx],d=$("outDate").value;if(q>i.stock){alert("Jumlah keluar melebihi stok yang tersedia.");return}i.stock-=q;transactions.push({date:d,name:i.name,type:"Keluar",qty:q,unit:i.unit,note:$("outNote").value});save();e.target.reset();setDateDefaults();render();alert("Barang keluar berhasil disimpan.")};
+$("searchItem").oninput=renderTable;$("filterStatus").onchange=renderTable;
+function setDateDefaults(){let d=new Date().toISOString().slice(0,10);$("inDate").value=d;$("outDate").value=d}
+setDateDefaults();
+setInterval(()=>{$("clock").textContent=new Date().toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"})},1000);
+render();

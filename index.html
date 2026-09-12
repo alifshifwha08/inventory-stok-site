@@ -1,134 +1,110 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventory Stok Site</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCM Stock Monitor</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="loginPage" class="login-page">
-    <div class="login-card">
-      <div class="login-logo">📦</div>
-      <h1>Inventory Stok Site</h1>
-      <p>Monitoring Stok Barang</p>
-      <form id="loginForm">
-        <label>Username</label>
-        <input id="loginUsername" type="text" placeholder="Masukkan username" required>
-        <label>Password</label>
-        <input id="loginPassword" type="password" placeholder="Masukkan password" required>
-        <button class="primary login-btn" type="submit">Masuk</button>
-        <div id="loginError" class="login-error"></div>
-      </form>
-      <div class="demo-account">
-        <b>Akun demo:</b><br>
-        Admin: <code>admin</code> / <code>admin123</code><br>
-        Kasir: <code>kasir</code> / <code>kasir123</code>
-      </div>
+<section id="loginPage" class="login-page">
+  <div class="login-panel">
+    <div class="brand-mark">S</div>
+    <div>
+      <div class="eyebrow">SCM • INVENTORY SYSTEM</div>
+      <h1>Stock Monitor</h1>
+      <p>Pantau persediaan barang dan kebutuhan pemesanan dengan lebih cepat.</p>
     </div>
+    <form id="loginForm">
+      <label>Username</label>
+      <input id="loginUsername" required placeholder="Username">
+      <label>Password</label>
+      <input id="loginPassword" type="password" required placeholder="Password">
+      <button class="btn primary full" type="submit">Masuk ke Sistem</button>
+      <div id="loginError" class="error"></div>
+    </form>
+    <div class="demo">Demo: <b>admin / admin123</b> &nbsp; atau &nbsp; <b>kasir / kasir123</b></div>
   </div>
+  <div class="login-art">
+    <div class="art-card">
+      <span>STOK HARI INI</span>
+      <strong>24</strong>
+      <small>jenis barang tersedia</small>
+    </div>
+    <div class="art-line"></div>
+    <div class="art-message">“Pesan sekarang” muncul otomatis saat stok menyentuh batas minimum.</div>
+  </div>
+</section>
 
-  <div id="appPage" class="app-page hidden">
+<section id="appPage" class="app hidden">
   <aside class="sidebar">
-    <h2>📦 Inventory</h2>
-    <p class="subtitle">Stok Barang Site</p>
-    <div class="user-box">👤 <span id="loggedUser">Admin</span></div>
-    <button class="nav active" data-page="dashboard">Dashboard</button>
-    <button class="nav" data-page="barang">Data Barang</button>
-    <button class="nav" data-page="transaksi">Transaksi</button>
-    <button class="nav" data-page="pesan">Perlu Dipesan</button>
-    <button class="nav logout-btn" id="logoutBtn">↪ Keluar</button>
+    <div class="side-brand"><div class="brand-mini">S</div><div><b>Stock Monitor</b><small>SCM Inventory</small></div></div>
+    <nav>
+      <button class="nav active" data-page="dashboard">⌂ <span>Dashboard</span></button>
+      <button class="nav" data-page="barang">▣ <span>Data Barang</span></button>
+      <button class="nav" data-page="masuk">＋ <span>Barang Masuk</span></button>
+      <button class="nav" data-page="keluar">− <span>Barang Keluar</span></button>
+      <button class="nav" data-page="pesan">! <span>Perlu Dipesan</span></button>
+      <button class="nav" data-page="laporan">▤ <span>Laporan</span></button>
+    </nav>
+    <div class="side-bottom">
+      <div class="user"><div class="avatar">A</div><div><b id="loggedUser">Admin</b><small>Pengguna aktif</small></div></div>
+      <button id="logoutBtn" class="logout">Keluar</button>
+    </div>
   </aside>
 
-  <main class="content">
-    <header>
-      <h1 id="pageTitle">Dashboard</h1>
-      <p>Pantau stok dan ketahui kapan barang harus dipesan.</p>
+  <main class="main">
+    <header class="topbar">
+      <div><span class="mobile-menu">☰</span><div class="eyebrow">MONITORING</div><h2 id="pageTitle">Dashboard</h2></div>
+      <div class="top-actions"><span id="clock"></span><button class="icon-btn">🔔</button><div class="top-user">Admin</div></div>
     </header>
 
-    <section id="dashboard" class="page">
-      <div class="cards">
-        <div class="card"><span>Total Barang</span><strong id="totalBarang">0</strong></div>
-        <div class="card"><span>Stok Aman</span><strong id="stokAman">0</strong></div>
-        <div class="card warning"><span>Perlu Dipesan</span><strong id="perluPesan">0</strong></div>
-        <div class="card danger"><span>Stok Habis</span><strong id="stokHabis">0</strong></div>
-      </div>
-      <div class="panel">
-        <h3>⚠️ Barang yang perlu dipesan</h3>
-        <div id="alertList"></div>
-      </div>
-    </section>
+    <div class="content">
+      <section class="page" id="page-dashboard">
+        <div class="welcome"><div><h3>Selamat datang 👋</h3><p>Berikut kondisi stok barang saat ini.</p></div><button class="btn primary" onclick="showPage('barang')">Kelola Barang</button></div>
+        <div class="stats">
+          <div class="stat"><span>Total Jenis</span><strong id="totalItems">0</strong><small>jenis barang</small></div>
+          <div class="stat"><span>Stok Aman</span><strong id="safeItems">0</strong><small>di atas minimum</small></div>
+          <div class="stat warning"><span>Segera Pesan</span><strong id="orderItems">0</strong><small>perlu pengadaan</small></div>
+          <div class="stat danger"><span>Stok Habis</span><strong id="emptyItems">0</strong><small>perlu tindakan</small></div>
+        </div>
+        <div class="grid-two">
+          <div class="card"><div class="card-head"><div><h3>Barang yang Perlu Dipesan</h3><p>Prioritas berdasarkan batas minimum</p></div><button class="link-btn" onclick="showPage('pesan')">Lihat semua →</button></div><div id="dashboardAlerts"></div></div>
+          <div class="card"><div class="card-head"><div><h3>Aktivitas Terakhir</h3><p>Transaksi stok terbaru</p></div></div><div id="recentTransactions"></div></div>
+        </div>
+      </section>
 
-    <section id="barang" class="page hidden">
-      <div class="panel">
-        <div class="panel-head">
-          <h3>Data Barang</h3>
-          <button class="primary" onclick="openModal()">+ Tambah Barang</button>
-        </div>
-        <input id="search" class="search" placeholder="Cari nama/kode barang..." oninput="renderBarang()">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Kode</th><th>Nama Barang</th><th>Stok</th><th>Satuan</th><th>Batas Pesan</th><th>Status</th><th>Aksi</th></tr></thead>
-            <tbody id="barangTable"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+      <section class="page hidden" id="page-barang">
+        <div class="page-head"><div><h3>Data Barang</h3><p>Kelola daftar barang, stok, satuan, dan batas minimum.</p></div><button class="btn primary" id="addItemBtn">＋ Tambah Barang</button></div>
+        <div class="card"><div class="toolbar"><input id="searchItem" placeholder="🔎 Cari kode atau nama barang..."><select id="filterStatus"><option value="all">Semua status</option><option value="safe">Aman</option><option value="order">Perlu dipesan</option><option value="empty">Habis</option></select></div><div class="table-wrap"><table><thead><tr><th>Kode</th><th>Nama Barang</th><th>Stok</th><th>Satuan</th><th>Minimum</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="itemTable"></tbody></table></div></div>
+      </section>
 
-    <section id="transaksi" class="page hidden">
-      <div class="panel">
-        <div class="panel-head">
-          <h3>Transaksi Stok</h3>
-          <button class="primary" onclick="openTransaksi()">+ Transaksi</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Tanggal</th><th>Barang</th><th>Jenis</th><th>Jumlah</th><th>Keterangan</th></tr></thead>
-            <tbody id="transaksiTable"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+      <section class="page hidden" id="page-masuk">
+        <div class="page-head"><div><h3>Barang Masuk</h3><p>Catat barang yang diterima atau masuk ke gudang.</p></div></div>
+        <div class="form-card"><form id="inForm"><label>Tanggal<input id="inDate" type="date" required></label><label>Barang<select id="inItem" required></select></label><label>Jumlah<input id="inQty" type="number" min="1" required></label><label>Keterangan<input id="inNote" placeholder="Contoh: pembelian supplier"></label><button class="btn primary" type="submit">Simpan Barang Masuk</button></form></div>
+      </section>
 
-    <section id="pesan" class="page hidden">
-      <div class="panel">
-        <h3>🔔 Sudah Waktunya Pesan</h3>
-        <p>Barang di bawah ini sudah mencapai atau melewati batas minimum.</p>
-        <div id="pesanList"></div>
-      </div>
-    </section>
+      <section class="page hidden" id="page-keluar">
+        <div class="page-head"><div><h3>Barang Keluar</h3><p>Catat pemakaian atau pengeluaran barang.</p></div></div>
+        <div class="form-card"><form id="outForm"><label>Tanggal<input id="outDate" type="date" required></label><label>Barang<select id="outItem" required></select></label><label>Jumlah<input id="outQty" type="number" min="1" required></label><label>Keterangan<input id="outNote" placeholder="Contoh: digunakan teknisi"></label><button class="btn primary" type="submit">Simpan Barang Keluar</button></form></div>
+      </section>
+
+      <section class="page hidden" id="page-pesan">
+        <div class="page-head"><div><h3>Perlu Dipesan</h3><p>Daftar otomatis berdasarkan stok dan batas minimum.</p></div></div>
+        <div id="orderList" class="order-grid"></div>
+      </section>
+
+      <section class="page hidden" id="page-laporan">
+        <div class="page-head"><div><h3>Laporan Stok</h3><p>Ringkasan kondisi stok untuk bahan monitoring.</p></div><button class="btn secondary" onclick="window.print()">Cetak / Simpan PDF</button></div>
+        <div class="card"><div class="report-summary" id="reportSummary"></div><div class="table-wrap"><table><thead><tr><th>Kode</th><th>Barang</th><th>Stok</th><th>Minimum</th><th>Status</th></tr></thead><tbody id="reportTable"></tbody></table></div></div>
+      </section>
+    </div>
   </main>
-  </div>
+</section>
 
-  <div id="modal" class="modal hidden">
-    <div class="modal-box">
-      <button class="close" onclick="closeModal()">×</button>
-      <h3 id="modalTitle">Tambah Barang</h3>
-      <form id="barangForm">
-        <input id="kode" placeholder="Kode barang" required>
-        <input id="nama" placeholder="Nama barang" required>
-        <input id="stok" type="number" min="0" placeholder="Stok awal" required>
-        <input id="satuan" placeholder="Satuan (pcs, box, unit)" required>
-        <input id="minimum" type="number" min="0" placeholder="Batas minimum pesan" required>
-        <button class="primary" type="submit">Simpan</button>
-      </form>
-    </div>
-  </div>
-
-  <div id="transaksiModal" class="modal hidden">
-    <div class="modal-box">
-      <button class="close" onclick="closeTransaksi()">×</button>
-      <h3>Transaksi Stok</h3>
-      <form id="transaksiForm">
-        <select id="barangId" required></select>
-        <select id="jenis" required><option value="masuk">Barang Masuk</option><option value="keluar">Barang Keluar</option></select>
-        <input id="jumlah" type="number" min="1" placeholder="Jumlah" required>
-        <input id="keterangan" placeholder="Keterangan">
-        <button class="primary" type="submit">Simpan Transaksi</button>
-      </form>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+<div id="modal" class="modal hidden">
+  <div class="modal-box"><button class="close" id="closeModal">×</button><h3 id="modalTitle">Tambah Barang</h3><form id="itemForm"><input id="editIndex" type="hidden"><label>Kode Barang<input id="itemCode" required placeholder="BRG007"></label><label>Nama Barang<input id="itemName" required placeholder="Nama barang"></label><div class="two"><label>Stok<input id="itemStock" type="number" min="0" required></label><label>Satuan<input id="itemUnit" required placeholder="pcs"></label></div><label>Batas Minimum<input id="itemMin" type="number" min="0" required></label><button class="btn primary full" type="submit">Simpan Data</button></form></div>
+</div>
+<script src="app.js"></script>
 </body>
 </html>
